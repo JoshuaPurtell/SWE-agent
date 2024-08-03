@@ -45,6 +45,7 @@ class Finetune():
 
     # Upload this output to OpenPipe on console
     def create_training_data(self, jsonData, model = "gpt-4o-mini"):
+        # appends to file
         f = open("hackathon/finetuning/training_data.jsonl", "a")
         for node in jsonData:
             # write output of transform_single_to_openai_chat_format in a single line to jsonl file
