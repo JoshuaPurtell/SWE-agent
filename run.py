@@ -347,7 +347,6 @@ class Main:
             raise _ContinueLoop
 
         # Get info, patch information
-        print("PRINTING ENV INFO: ", self.env.record)
         issue = getattr(self.env, "query", None)
         files = []
         assert self.env.record is not None  # mypy
