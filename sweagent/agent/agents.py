@@ -11,6 +11,7 @@ from simple_parsing.helpers.flatten import FlattenedAccess
 from simple_parsing.helpers.serialization.serializable import FrozenSerializable
 from tenacity import RetryError
 
+from hackathon.finetuning.finetune import Finetune
 from sweagent.agent.commands import Command, ParseCommand
 from sweagent.agent.history_processors import HistoryProcessor
 from sweagent.agent.models import (
@@ -485,7 +486,8 @@ class Agent:
             action: action that the model proposes
             output: raw model output (not output of the action)
         """
-        thought, action, output = self.forward_with_error_check(observation, state)
+        finetune_example_store = Finetune()
+        thought, action, output = self.forward_with_error_check(observation, state, finetune_example_store)
 
         self._append_history(
             {
@@ -497,12 +499,16 @@ class Agent:
             },
         )
 
+        # output = thought + action
+        finetune_example_store.setOutput(output)
+        finetune_example_store.append_single_entry()
+
         self.logger.info(f"💭 THOUGHT ({self.name})\n{thought}")
         self.logger.info(f"🎬 ACTION ({self.name})\n{action}")
 
         return thought, action, output
 
-    def forward_model(self, observation: str, state: str) -> str:
+    def forward_model(self, observation: str, state: str, finetune_store: Finetune) -> str:
         """Query the model with the current state and observation with the appropriate template.
 
         Returns:
@@ -539,6 +545,7 @@ class Agent:
             )
 
         message = "\n".join(messages)
+        finetune_store.setInput(message)
 
         self.logger.info(f"🤖 MODEL INPUT\n{message}")
         self._append_history({"role": "user", "content": message, "agent": self.name})
@@ -641,7 +648,7 @@ class Agent:
         self.logger.warning(f"Malformat limit reached: \n{output}")
         return "Exit due to format error", "exit_format", output
 
-    def forward_with_error_check(self, observation: str, state: str) -> tuple[str, str, str]:
+    def forward_with_error_check(self, observation: str, state: str, finetune_store: Finetune) -> tuple[str, str, str]:
         """Wrapper around `self.forward_model` that handles errors and retries
         due to format errors or blocked actions.
 
@@ -651,7 +658,7 @@ class Agent:
             output: raw model output
         """
         try:
-            return self.check_format_and_requery(self.forward_model(observation, state))
+            return self.check_format_and_requery(self.forward_model(observation, state, finetune_store))
         except KeyboardInterrupt:
             raise
         except RuntimeError as e:
