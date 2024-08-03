@@ -44,20 +44,7 @@ class Finetune():
         }
 
     # Upload this output to OpenPipe on console
-    def create_training_data(self, jsonData, model = "gpt-4o-mini"):
-        # appends to file
-        f = open("hackathon/finetuning/training_data.jsonl", "a")
-        for node in jsonData:
-            # write output of transform_single_to_openai_chat_format in a single line to jsonl file
-            f.write(str(self.transform_single_to_openai_chat_format(node, model)) + "\n")
+    def append_single_entry(self, one_json_obj, model = "gpt-4o-mini"):
+        f = open("hackathon/finetuning/{example}_training_data.jsonl".format(example = jsonData['task_id']), "a")
+        f.write(str(self.transform_single_to_openai_chat_format(one_json_obj, model)) + "\n")
         f.close()
-
-if __name__ == "__main__":
-    print(os.getcwd())
-    # Change this to where the data is stored
-    filePath = "tests/test_data/data_sources/swe-bench-dev-easy.json"
-    fileObj = open(filePath)
-    jsonData = json.load(fileObj)
-
-    Finetune().create_training_data(jsonData)
-    
