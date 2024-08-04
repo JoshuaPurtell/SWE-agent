@@ -165,14 +165,14 @@ def run_swebench_evaluation(
     for pred in preds:
         instance_id = pred["instance_id"]
         traj_path = "/".join(predictions_path.split("/")[:-1]) + f"/{instance_id}.traj"
-        print("Traj path: ", traj_path)
+        #print("Traj path: ", traj_path)
         with open(traj_path) as f:
             traj = f.read()
         trajectories[instance_id] = json.loads(traj)
         traceback_count = traj.count("Traceback")
         command_error_count = traj.count("Command failed")
         syntax_error_count = traj.count("SyntaxError")
-        print(f"Instance {instance_id} - Tracebacks: {traceback_count}, Command Errors: {command_error_count}, Syntax Errors: {syntax_error_count}")
+        #print(f"Instance {instance_id} - Tracebacks: {traceback_count}, Command Errors: {command_error_count}, Syntax Errors: {syntax_error_count}")
         
         traceback_counts[instance_id] = traceback_count
         command_error_counts[instance_id] = command_error_count
@@ -207,17 +207,16 @@ def run_swebench_evaluation(
     t0 = time.time()
     result = subprocess.run(command, capture_output=True, text=True)
     print("Time taken to run swebench: ", time.time() - t0)
-    #print("STDERR:", result.stderr)
-    # Parse and print the summary
     lines = result.stdout.split("\n")
     success_ids = []
     failed_ids = []
     for line in lines:
         if "Report written to " in line:
+            print("Hit")
             file_name = line.replace("Report written to ", "")
             with open(file_name) as f:
                 summary = json.load(f)
-            failed_ids = summary["unresolved_ids"]
+            failed_ids = list(set(summary["unresolved_ids"]).union(set(summary['error_ids'])).union(set(summary['empty_patch_ids'])))
             success_ids = summary["resolved_ids"]
             from colorama import Fore, Style, init
 
