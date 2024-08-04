@@ -854,49 +854,37 @@ class TogetherModel(BaseModel):
 class OpenPipe(BaseModel):
     MODELS = {
         "meta-llama/Meta-Llama-3.1-8B-Instruct": {
-            "api_key_name": "OPENPIPE_API_KEY",
             "model_id": "openpipe:little-buttons-sleep",
             "max_context": 8192,
             "cost_per_input_token": 9e-07,
             "cost_per_output_token": 9e-07,
         },
         "meta-llama/Meta-Llama-3.1-70B-Instruct": { # FINE-TUNED
-            "api_key_name": "OPENPIPE_API_KEY",
             "model_id": "openpipe:petite-bars-dress", 
             "max_context": 128_000,
+            "cost_per_input_token": 9e-07,
+            "cost_per_output_token": 9e-07,
         },
-       "gpt-4o-2024-05-13": {
-            "max_context": 128_000,
-            "cost_per_input_token": 5e-06,
-            "cost_per_output_token": 15e-06,
-        },
-        "gpt-4o-mini-2024-07-18": {
-            "max_context": 128_000,
-            "cost_per_input_token": 1.5e-07,
-            "cost_per_output_token": 6e-07,
-        }, 
     }
 
     SHORTCUTS = {
         "open-pipe-llama8b" : "meta-llama/Meta-Llama-3.1-8B-Instruct",
         "open-pipe-llama70b" : "meta-llama/Meta-Llama-3.1-70B-Instruct",
-        "gpt4o": "gpt-4o-2024-05-13",
-        "gpt-4o-mini": "gpt-4o-mini-2024-07-18",
     }
 
     def __init__(self, args: ModelArguments, commands: list[Command]):
         super().__init__(args, commands)
         self.llmClient = OpenPipeOpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"),
             openpipe = {
                 "api_key": os.getenv("OPENPIPE_API_KEY"),
             }     
         )
 
-    def openpipe_wrapper(self, prompt: str, model_id: str) -> str:
+    def openpipe_wrapper(self, messages: str, model_id: str) -> str:
         response = self.llmClient.chat.completions.create(
             model=model_id,
-            messages=prompt,
-            
+            messages=messages,       
             temperature=self.args.temperature,
             top_p=self.args.top_p,
             stop=['<human>'],
@@ -904,28 +892,30 @@ class OpenPipe(BaseModel):
 
         return response.choices[0].message.content
 
-    def history_to_messages(self, history: list[dict[str, str]], is_demonstration: bool = False) -> str:
+    def history_to_messages(
+        self,
+        history: list[dict[str, str]],
+        is_demonstration: bool = False,
+    ) -> str | list[dict[str, str]]:
         """
-        Create `prompt` by filtering out all keys except for role/content per `history` turn
+        Create `messages` by filtering out all keys except for role/content per `history` turn
         """
         # Remove system messages if it is a demonstration
         if is_demonstration:
             history = [entry for entry in history if entry["role"] != "system"]
-        # Map history to TogetherAI format
-        mapping = {"user": "human", "assistant": "bot", "system": "bot"}
-        prompt = [f'<{mapping[d["role"]]}>: {d["content"]}' for d in history]
-        prompt = "\n".join(prompt)
-        return f"{prompt}\n<bot>:"
+            return "\n".join([entry["content"] for entry in history])
+        # Return history components with just role, content fields
+        return [{k: v for k, v in entry.items() if k in ["role", "content"]} for entry in history]
 
     def query(self, history: list[dict[str, str]]) -> str:
         """
         Query OpenPipe with the given `history` and return the response.
         """
         # Anthropic's count_tokens is convenient because it caches and utilizes huggingface/tokenizers, so we will use.
-        prompt = self.history_to_messages(history)
-        max_tokens_to_sample = self.model_metadata["max_context"] - Anthropic().count_tokens(prompt)
+        messages = self.history_to_messages(history)
+        max_tokens_to_sample = self.model_metadata["max_context"]# - Anthropic().count_tokens()
         response = self.openpipe_wrapper(
-            prompt=history,
+            messages=messages,
             model_id=self.model_metadata["model_id"],
         )
 
