@@ -855,7 +855,7 @@ class OpenPipe(BaseModel):
     MODELS = {
         "meta-llama/Meta-Llama-3.1-8B-Instruct": {
             "model_id": "openpipe:little-buttons-sleep",
-            "max_context": 8192,
+            "max_context": 8_192,
             "cost_per_input_token": 9e-07,
             "cost_per_output_token": 9e-07,
         },
