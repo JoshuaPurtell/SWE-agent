@@ -46,7 +46,7 @@ def main(dataset_name="princeton-nlp/SWE-bench_Lite", model_name="gpt-4o-mini", 
     import time
     print(dataset_name)
     d = load_dataset(dataset_name)
-    run_agent = False
+    run_agent = True
     evaluate_agent = True
     question_ids = [
         d[split][question_index]["instance_id"]
@@ -126,8 +126,8 @@ if __name__ == "__main__":
         model_name="gpt-4o-mini",
         cost_limit=0.10,
         split="dev",
-        first_question_index=0,
-        last_question_index=20,
+        first_question_index=20,
+        last_question_index=100,
     )
     #ERROR: No matching distribution found for vtk, hd5py, pyvista
     
@@ -135,4 +135,7 @@ if __name__ == "__main__":
     # Success pvlib__pvlib-python-1072, pydicom__pydicom-1694
     # Progress: marshmallow-code__marshmallow-1359, pylint-dev__astroid-1196, pylint-dev__astroid-1268
 
-    # Full-Dev gpt-4o-mini 0.10 0-20
+    # Full-Dev gpt-4o-mini 0.10 0-100
+    # Success 
+    # Progress sqlfluff__sqlfluff-884
+    # Failures sqlfluff__sqlfluff-905
