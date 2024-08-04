@@ -857,7 +857,7 @@ class OpenPipe(BaseModel):
         },
         "meta-llama/Meta-Llama-3.1-70B-Instruct": {
             "api_key_name": "OPENPIPE_API_KEY",
-            "model_id": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+            "model_id": "openpipe:petite-bars-dress",
         },
        "gpt-4o-2024-05-13": {
             "max_context": 128_000,
