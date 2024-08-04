@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from hackathon.finetuning.finetune import Finetune
 from sweagent import CONFIG_DIR
 from sweagent.utils.log import add_file_handler, get_logger
 
@@ -368,6 +369,7 @@ class Main:
             observation=observation,
             traj_dir=self.traj_dir,
             return_type="info_trajectory",
+            finetune_store=Finetune(instance_id),
         )
         self._save_predictions(instance_id, info)
         for hook in self.hooks:

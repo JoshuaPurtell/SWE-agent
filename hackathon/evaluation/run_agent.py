@@ -3,13 +3,14 @@ from __future__ import annotations
 import time
 
 from hackathon.evaluation.evaluate import get_runnable_problems, run_agents_and_catch_logs, run_swebench_evaluation
+from getpass import getuser
 
 if __name__ == "__main__":
     from datasets import load_dataset
 
     d = load_dataset("princeton-nlp/SWE-bench_Lite")
 
-    mode = ["mini", "sonnet", "L3.1-70b-Together", "L3.1-405b-Baseten", "L3.1-70b-Groq"][0]
+    mode = ["mini", "sonnet", "L3.1-70b-Together", "L3.1-70b-Baseten", "L3.1-405b-Baseten", "L3.1-70b-Groq"][2]
     if mode == "mini":
         model_name = "gpt-4o-mini"
         cost_limit = 0.22
@@ -19,6 +20,9 @@ if __name__ == "__main__":
     elif mode == "L3.1-70b-Together":
         model_name = "L3.1-70b-Together"
         cost_limit = 0.50
+    elif mode == "L3.1-70b-Baseten":
+        model_name = "L3.1-70b-BaseTen"
+        cost_limit = 1.0
     elif mode == "L3.1-405b-Baseten":
         model_name = "L3.1-405b-BaseTen"
         cost_limit = 1.0
@@ -48,7 +52,7 @@ if __name__ == "__main__":
     # ]
 
     runnable_problems_by_split = get_runnable_problems(
-        f"trajectories/jp/{model_name}__SWE-bench_Lite__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1"
+        f"trajectories/{getuser()}/{model_name}__SWE-bench_Lite__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1"
     )
     print("Model name: ", model_name)
     print("Split: ", split)
