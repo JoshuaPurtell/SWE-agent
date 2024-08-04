@@ -864,6 +864,8 @@ class OpenPipe(BaseModel):
             "api_key_name": "OPENPIPE_API_KEY",
             "model_id": "openpipe:petite-bars-dress", 
             "max_context": 128_000,
+            "cost_per_input_token": 9e-07,
+            "cost_per_output_token": 9e-07,
         },
        "gpt-4o-2024-05-13": {
             "max_context": 128_000,
