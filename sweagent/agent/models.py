@@ -849,6 +849,71 @@ class TogetherModel(BaseModel):
         self.update_stats(input_tokens, output_tokens)
         return response
 
+class OpenPipe(BaseModel):
+    MODELS = {
+        "meta-llama/Meta-Llama-3.1-8B-Instruct": {
+            "api_key_name": "OPENPIPE_API_KEY",
+            "model_id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        },
+        "meta-llama/Meta-Llama-3.1-70B-Instruct": {
+            "api_key_name": "OPENPIPE_API_KEY",
+            "model_id": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+        },
+       "gpt-4o-2024-05-13": {
+            "max_context": 128_000,
+            "cost_per_input_token": 5e-06,
+            "cost_per_output_token": 15e-06,
+        },
+        "gpt-4o-mini-2024-07-18": {
+            "max_context": 128_000,
+            "cost_per_input_token": 1.5e-07,
+            "cost_per_output_token": 6e-07,
+        }, 
+    }
+
+    SHORTCUTS = {
+        "open-pipe-llama8b" : "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        "open-pipe-llama70b" : "meta-llama/Meta-Llama-3.1-70B-Instruct",
+        "gpt4o": "gpt-4o-2024-05-13",
+        "gpt-4o-mini": "gpt-4o-mini-2024-07-18",
+    }
+
+    def __init__(self, args: ModelArguments, commands: list[Command]):
+        super().__init__(args, commands)
+        llmClient = OpenAI(
+            openpipe = {
+                "api_key": os.getenv("OPENPIPE_API_KEY"),
+            }     
+        )
+
+    def openpipe_wrapper(self, prompt: str, model_id: str) -> str:
+        response = self.llmClient.chat.completions.create(
+            model=model_id,
+            messages=prompt,
+            
+            #TODO: not sure what we should set this to
+            temperature=self.args.temperature,
+        )
+        
+        return response.choices[0].message
+
+    def query(self, history: list[dict[str, str]]) -> str:
+        """
+        Query OpenPipe with the given `history` and return the response.
+        """
+        # Anthropic's count_tokens is convenient because it caches and utilizes huggingface/tokenizers, so we will use.
+        max_tokens_to_sample = self.model_metadata["max_context"] - Anthropic().count_tokens(prompt)
+        response = self.openpipe_wrapper(
+            prompt=history,
+            model_id=self.model_metadata["model_id"],
+        )
+
+        # Calculate + update costs, return response
+        # response = completion["choices"][0]["text"].split("<human>")[0]
+        input_tokens = 0  # completion["usage"]["prompt_tokens"]
+        output_tokens = 0  # completion["usage"]["completion_tokens"]
+        self.update_stats(input_tokens, output_tokens)
+        return response
 
 class BaseTen(BaseModel):
     MODELS = {
