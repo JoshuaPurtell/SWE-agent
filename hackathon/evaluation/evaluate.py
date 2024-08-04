@@ -24,12 +24,13 @@ def get_args_dev(
     instance_to_filter_by="marshmallow-code__marshmallow-1359",
     per_instance_cost_limit=0.025,
     split="dev",
+    dataset_name="princeton-nlp/SWE-bench_Lite",
 ) -> ScriptArguments:
     return ScriptArguments(
         suffix="",
         environment=EnvironmentArguments(
             image_name="sweagent/swe-agent:latest",
-            data_path="princeton-nlp/SWE-bench_Lite",
+            data_path=dataset_name,
             split=split,
             verbose=False,
             install_environment=True,
@@ -118,6 +119,7 @@ def run_swebench_evaluation(
     import json
 
     # Load all predictions
+    print("Loading from: ",predictions_path)
     with open(predictions_path) as f:
         all_preds = [json.loads(line) for line in f]
     # Separate predictions into dev and test
@@ -157,6 +159,16 @@ def run_swebench_evaluation(
     trajectories = {}
 
     dataset = full_dataset[split]
+    print("Before: ", len(preds))
+    preds = [pred for pred in preds if pred["instance_id"] in [d["instance_id"] for d in dataset]]
+    print("After: ", len(preds))
+    print("Lens for split")
+    for split in ["dev", "test"]:
+        preds_in_split = [pred for pred in all_preds if pred["instance_id"] in ids_by_split[split]]
+        from datasets import load_dataset
+        preds_in_lite_split = [pred for pred in preds_in_split if pred["instance_id"] in [d["instance_id"] for d in load_dataset("princeton-nlp/SWE-bench_Lite")[split]]]
+        print(f"{split}: {len(preds_in_split)}")
+        print(f"{split} in lite: {len(preds_in_lite_split)}")
     for pred in preds:
         instance_id = pred["instance_id"]
         traj_path = "/".join(predictions_path.split("/")[:-1]) + f"/{instance_id}.traj"
@@ -205,6 +217,8 @@ def run_swebench_evaluation(
     #print("STDERR:", result.stderr)
     # Parse and print the summary
     lines = result.stdout.split("\n")
+    success_ids = []
+    failed_ids = []
     for line in lines:
         if "Report written to " in line:
             file_name = line.replace("Report written to ", "")
@@ -223,6 +237,9 @@ def run_swebench_evaluation(
                 milestone_1_emoji = "✅" if perc == 100 else "❌"
                 milestone_1 = f" (PATCHED FILES: {perc}% {milestone_1_emoji})"
                 print(f"{color}• {id}{milestone_1}{Style.RESET_ALL}")
+    if len(success_ids) + len(failed_ids) == 0:
+        print("No results found")
+        return [], [], {}
     print(f"MEAN FILES PATCHED: {milestone_1_mean:.2f}%")
     print(f"SUCCESS RATE: {100 * len(success_ids) / (len(success_ids) + len(failed_ids)):.2f}%")
 
@@ -249,13 +266,21 @@ def run_swebench_evaluation(
     return success_ids, failed_ids, instance_infos
 
 def run_agent_and_catch_logs(
-    model_name=None, instance="marshmallow-code__marshmallow-1359", cost_limit=0.05, split="dev"
+    model_name=None, instance="marshmallow-code__marshmallow-1359", cost_limit=0.05, split="dev", verbose=False, dataset_name="princeton-nlp/SWE-bench_Lite"
 ):
+    if verbose:
+        main(
+            get_args_dev(
+                model_name=model_name, instance_to_filter_by=instance, per_instance_cost_limit=cost_limit, split=split, dataset_name=dataset_name
+            )
+        )
+        return []
+    
     output = io.StringIO()
     with redirect_stdout(output):
         main(
             get_args_dev(
-                model_name=model_name, instance_to_filter_by=instance, per_instance_cost_limit=cost_limit, split=split
+                model_name=model_name, instance_to_filter_by=instance, per_instance_cost_limit=cost_limit, split=split, dataset_name=dataset_name
             )
         )
 
@@ -265,14 +290,14 @@ def run_agent_and_catch_logs(
     return log_lines
 
 
-def run_agents_and_catch_logs(model_name, instance_ids: List, instance_cost_limit: float, split: str):
+def run_agents_and_catch_logs(model_name, instance_ids: List, instance_cost_limit: float, split: str, verbose=False, dataset_name="princeton-nlp/SWE-bench_Lite"):
     import multiprocessing
 
     num_cpus = multiprocessing.cpu_count()
     with multiprocessing.Pool(processes=num_cpus) as pool:
         results = pool.starmap(
             run_agent_and_catch_logs,
-            [(model_name, instance_id, instance_cost_limit, split) for instance_id in instance_ids],
+            [(model_name, instance_id, instance_cost_limit, split, verbose, dataset_name) for instance_id in instance_ids],
         )
 
     log_lines = [line for result in results for line in result]

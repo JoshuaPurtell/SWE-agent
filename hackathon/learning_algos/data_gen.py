@@ -41,28 +41,31 @@ def fix_jsonl(file_path):
     
     return fixed_data
 
-def main(dataset_name="princeton-nlp/SWE-bench", model_name="gpt-4o-mini", cost_limit=0.21, split="dev", first_question_index=80, last_question_index=85):
+def main(dataset_name="princeton-nlp/SWE-bench_Lite", model_name="gpt-4o-mini", cost_limit=0.21, split="dev", first_question_index=80, last_question_index=85):
     from datasets import load_dataset
     import time
-    d = load_dataset("princeton-nlp/SWE-bench_Lite")
-    run_agent = True
+    print(dataset_name)
+    d = load_dataset(dataset_name)
+    run_agent = False
     evaluate_agent = True
     question_ids = [
         d[split][question_index]["instance_id"]
         for question_index in range(first_question_index, last_question_index)
     ]
-
     runnable_problems_by_split = get_runnable_problems(
-        f"trajectories/{getuser()}/{model_name}__SWE-bench_Lite__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1"
+        f"trajectories/{getuser()}/{model_name}__{dataset_name}__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1"
     )
     print("Model name: ", model_name)
     print("Split: ", split)
     print({k: len(v) for k, v in runnable_problems_by_split.items()})
     t0_agent = time.time()
     if run_agent:
-        run_agents_and_catch_logs(
-            model_name=model_name, instance_ids=question_ids, instance_cost_limit=cost_limit, split=split
-        )
+        chunk_size = 10
+        for i in range(0, len(question_ids), chunk_size):
+            batch_ids = question_ids[i:i+chunk_size]
+            run_agents_and_catch_logs(
+                model_name=model_name, instance_ids=batch_ids, instance_cost_limit=cost_limit, split=split, verbose=False, dataset_name=dataset_name
+            )
     print("Time taken to run agent: ", time.time() - t0_agent)
     if evaluate_agent:
         import time
@@ -74,7 +77,7 @@ def main(dataset_name="princeton-nlp/SWE-bench", model_name="gpt-4o-mini", cost_
             successful_ids, failed_ids, information_by_instance = run_swebench_evaluation(
                 predictions_path_override=None,
                 model_name=model_name,
-                full_dataset_name="princeton-nlp/SWE-bench_Lite",
+                full_dataset_name=dataset_name,
                 cost_limit=cost_limit,
                 temperature=0.00,
                 top_p=0.95,
@@ -119,11 +122,17 @@ def main(dataset_name="princeton-nlp/SWE-bench", model_name="gpt-4o-mini", cost_
 if __name__ == "__main__":
     #Next do SWE-bench 0-220
     main(
-        dataset_name="princeton-nlp/SWE-bench-Lite",
+        dataset_name="princeton-nlp/SWE-bench",
         model_name="gpt-4o-mini",
-        cost_limit=0.20,
+        cost_limit=0.10,
         split="dev",
         first_question_index=0,
-        last_question_index=23
+        last_question_index=20,
     )
+    #ERROR: No matching distribution found for vtk, hd5py, pyvista
     
+    # Lite-Dev gpt-4o-mini 0.10 0-23
+    # Success pvlib__pvlib-python-1072, pydicom__pydicom-1694
+    # Progress: marshmallow-code__marshmallow-1359, pylint-dev__astroid-1196, pylint-dev__astroid-1268
+
+    # Full-Dev
