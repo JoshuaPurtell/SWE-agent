@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     d = load_dataset("princeton-nlp/SWE-bench_Lite")
 
-    mode = ["mini", "sonnet", "L3.1-70b-Together", "L3.1-405b-Baseten", "L3.1-70b-Groq"][0]
+    mode = ["mini", "sonnet", "L3.1-70b-Together", "L3.1-70b-Baseten", "L3.1-405b-Baseten", "L3.1-70b-Groq"][3]
     if mode == "mini":
         model_name = "gpt-4o-mini"
         cost_limit = 0.20
@@ -19,6 +19,9 @@ if __name__ == "__main__":
     elif mode == "L3.1-70b-Together":
         model_name = "L3.1-70b-Together"
         cost_limit = 0.50
+    elif mode == "L3.1-70b-Baseten":
+        model_name = "L3.1-70b-BaseTen"
+        cost_limit = 1.0
     elif mode == "L3.1-405b-Baseten":
         model_name = "L3.1-405b-BaseTen"
         cost_limit = 1.0
@@ -28,8 +31,8 @@ if __name__ == "__main__":
     run_agent = True
     evaluate_agent = True
     split = "dev"
-    first_question_index = 5
-    last_question_index = 20
+    first_question_index = 10
+    last_question_index = 11
 
     runnable_problems_by_split = get_runnable_problems(
         f"trajectories/jp/{model_name}__SWE-bench_Lite__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1"
