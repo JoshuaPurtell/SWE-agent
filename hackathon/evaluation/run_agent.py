@@ -44,29 +44,33 @@ if __name__ == "__main__":
     from datasets import load_dataset
 
     d = load_dataset("princeton-nlp/SWE-bench_Lite")#_Lite
-    mode = ["mini", "sonnet", "L3.1-70b-Together", "L3.1-70b-Baseten", "L3.1-405b-Baseten", "L3.1-70b-Groq"][2]
-    if mode == "mini":
-        model_name = "gpt-4o-mini"
-        cost_limit = 0.21
-    elif mode == "sonnet":
-        model_name = "claude-3-5-sonnet-20240620"
-        cost_limit = 1.5
-    elif mode == "L3.1-70b-Together":
-        model_name = "L3.1-70b-Together"
-        cost_limit = 0.25
-    elif mode == "L3.1-70b-Baseten":
-        model_name = "L3.1-70b-BaseTen"
-        cost_limit = 1.0
-    elif mode == "L3.1-405b-Baseten":
-        model_name = "L3.1-405b-BaseTen"
-        cost_limit = 1.0
-    elif mode == "L3.1-70b-Groq":
-        model_name = "L3.1-70b-Groq"
-        cost_limit = 1.0
-    run_agent = True
-    evaluate_agent = True
+    # mode = ["mini", "sonnet", "L3.1-70b-Together", "L3.1-70b-Baseten", "L3.1-405b-Baseten", "L3.1-70b-Groq", "open-pipe-llama8b"][2]
+    # if mode == "mini":
+    #     model_name = "gpt-4o-mini"
+    #     cost_limit = 0.21
+    # elif mode == "sonnet":
+    #     model_name = "claude-3-5-sonnet-20240620"
+    #     cost_limit = 1.5
+    # elif mode == "L3.1-70b-Together":
+    #     model_name = "L3.1-70b-Together"
+    #     cost_limit = 0.25
+    # elif mode == "L3.1-70b-Baseten":
+    #     model_name = "L3.1-70b-BaseTen"
+    #     cost_limit = 1.0
+    # elif mode == "L3.1-405b-Baseten":
+    #     model_name = "L3.1-405b-BaseTen"
+    #     cost_limit = 1.0
+    # elif mode == "L3.1-70b-Groq":
+    #     model_name = "L3.1-70b-Groq"
+    #     cost_limit = 1.0
     
-    split = "test"
+    model_name = "open-pipe-llama70b"
+    cost_limit = 1.0
+
+    run_agent = True
+    evaluate_agent = False
+    
+    split = "dev"
     question_ids = ["django__django-14855"]#["astropy__astropy-14995","django__django-14382"]
     question_ids = [
         "astropy__astropy-14995",
@@ -79,8 +83,8 @@ if __name__ == "__main__":
         "django__django-14382",
         "django__django-14855",
     ]
-    first_question_index = 80
-    last_question_index = 85
+    first_question_index = 0
+    last_question_index = 23
     question_ids = [
         d[split][question_index]["instance_id"]
         for question_index in range(first_question_index, last_question_index)
