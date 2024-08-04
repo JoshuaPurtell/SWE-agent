@@ -500,7 +500,9 @@ class Agent:
 
         # output = thought + action
         finetune_store.setOutput(output)
-        finetune_store.append_single_entry()
+        finetune_store.append_single_entry(
+            model=self.model
+        )
 
         self.logger.info(f"💭 THOUGHT ({self.name})\n{thought}")
         self.logger.info(f"🎬 ACTION ({self.name})\n{action}")
