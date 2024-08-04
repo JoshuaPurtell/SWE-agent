@@ -53,7 +53,8 @@ class Finetune():
         }
 
     # Upload this output to OpenPipe on console
-    def append_single_entry(self):
+    def append_single_entry(self, model):
+        print("Adding")
         if self.input is None or self.output is None:
             raise ValueError("Input and Output cannot be None")
         f = open(

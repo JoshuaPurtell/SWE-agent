@@ -146,17 +146,38 @@ def run_swebench_evaluation(
     preds = dev_preds if split == "dev" else test_preds
     if len(preds) == 0:
         print(f"No predictions found for split {split}")
-        return [], []
+        return [], [], {}
     else:
         print(f"Running evaluation for split {split} - {len(preds)} predictions found")
 
     milestone_1_percents = {}
+    traceback_counts = {}
+    command_error_counts = {}
+    syntax_error_counts = {}
+    trajectories = {}
+
     dataset = full_dataset[split]
     for pred in preds:
         instance_id = pred["instance_id"]
+        traj_path = "/".join(predictions_path.split("/")[:-1]) + f"/{instance_id}.traj"
+        print("Traj path: ", traj_path)
+        with open(traj_path) as f:
+            traj = f.read()
+        trajectories[instance_id] = json.loads(traj)
+        traceback_count = traj.count("Traceback")
+        command_error_count = traj.count("Command failed")
+        syntax_error_count = traj.count("SyntaxError")
+        print(f"Instance {instance_id} - Tracebacks: {traceback_count}, Command Errors: {command_error_count}, Syntax Errors: {syntax_error_count}")
+        
+        traceback_counts[instance_id] = traceback_count
+        command_error_counts[instance_id] = command_error_count
+        syntax_error_counts[instance_id] = syntax_error_count
+
         filtered_dataset = dataset.filter(lambda example: example["instance_id"] == instance_id)
         expected = filtered_dataset[0]
         milestone_1_percents[instance_id] = compare_filename_in_patches(pred["model_patch"], expected["patch"])
+    
+
     milestone_1_success = [id for id, percent in milestone_1_percents.items() if percent == 100]
     milestone_1_mean = sum(milestone_1_percents.values()) / len(milestone_1_percents) if milestone_1_percents else 0
     print(f"PATCHED ALL FILES: {len(milestone_1_success)}/{len(preds)}")
@@ -204,6 +225,28 @@ def run_swebench_evaluation(
                 print(f"{color}• {id}{milestone_1}{Style.RESET_ALL}")
     print(f"MEAN FILES PATCHED: {milestone_1_mean:.2f}%")
     print(f"SUCCESS RATE: {100 * len(success_ids) / (len(success_ids) + len(failed_ids)):.2f}%")
+
+    instance_infos = {}
+    metrics = [
+        ("milestone_1_percent", milestone_1_percents),
+        ("traceback_count", traceback_counts),
+        ("command_error_count", command_error_counts),
+        ("syntax_error_count", syntax_error_counts),
+        ("trajectory", trajectories),
+    ]
+
+    for id in success_ids:
+        instance_infos[id] = {
+            "status": "success",
+            **{name: metric.get(id, 0) for name, metric in metrics},
+        }
+
+    for id in failed_ids:
+        instance_infos[id] = {
+            "status": "failed",
+            **{name: metric.get(id, 0) for name, metric in metrics},
+        }
+    return success_ids, failed_ids, instance_infos
 
 def run_agent_and_catch_logs(
     model_name=None, instance="marshmallow-code__marshmallow-1359", cost_limit=0.05, split="dev"
