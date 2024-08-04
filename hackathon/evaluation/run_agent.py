@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 
 from hackathon.evaluation.evaluate import get_runnable_problems, run_agents_and_catch_logs, run_swebench_evaluation
+from getpass import getuser
 
 if __name__ == "__main__":
     from datasets import load_dataset
@@ -31,11 +32,11 @@ if __name__ == "__main__":
     run_agent = True
     evaluate_agent = True
     split = "dev"
-    first_question_index = 10
-    last_question_index = 11
+    first_question_index = 0
+    last_question_index = 23
 
     runnable_problems_by_split = get_runnable_problems(
-        f"trajectories/jp/{model_name}__SWE-bench_Lite__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1"
+        f"trajectories/{getuser()}/{model_name}__SWE-bench_Lite__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1"
     )
     print("Model name: ", model_name)
     print("Split: ", split)
