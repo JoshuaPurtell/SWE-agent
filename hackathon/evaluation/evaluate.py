@@ -52,20 +52,18 @@ def get_args_dev(
     )
 
 
-def get_runnable_problems(trajectory_path):
+def get_runnable_problems(trajectory_path,dataset_name="princeton-nlp/SWE-bench_Lite"):
     import os
 
     from datasets import load_dataset
 
-    d = load_dataset("princeton-nlp/SWE-bench_Lite")
+    d = load_dataset(dataset_name)
 
     traj_files = []
     for root, dirs, files in os.walk(trajectory_path):
         for file in files:
             if file.endswith(".traj"):
                 traj_files.append(file.split(".")[0])
-    print("Checking: ", trajectory_path)
-    print("Trajectory files found: ", len(traj_files))
     dev_question_ids = [q["instance_id"] for q in d["dev"]]
     test_question_ids = [q["instance_id"] for q in d["test"]]
 
@@ -115,13 +113,14 @@ def run_swebench_evaluation(
     else:
         predictions_path = predictions_path_override
 
-    ids_by_split = get_runnable_problems("/".join(predictions_path.split("/")[:-1]))
+    ids_by_split = get_runnable_problems("/".join(predictions_path.split("/")[:-1]),full_dataset_name)
     import json
 
     # Load all predictions
     print("Loading from: ",predictions_path)
     with open(predictions_path) as f:
         all_preds = [json.loads(line) for line in f]
+    print("N all preds: ", len(all_preds))
     # Separate predictions into dev and test
 
     dev_ids = dev_ids if dev_ids is not None else ids_by_split["dev"]
@@ -159,16 +158,6 @@ def run_swebench_evaluation(
     trajectories = {}
 
     dataset = full_dataset[split]
-    print("Before: ", len(preds))
-    preds = [pred for pred in preds if pred["instance_id"] in [d["instance_id"] for d in dataset]]
-    print("After: ", len(preds))
-    print("Lens for split")
-    for split in ["dev", "test"]:
-        preds_in_split = [pred for pred in all_preds if pred["instance_id"] in ids_by_split[split]]
-        from datasets import load_dataset
-        preds_in_lite_split = [pred for pred in preds_in_split if pred["instance_id"] in [d["instance_id"] for d in load_dataset("princeton-nlp/SWE-bench_Lite")[split]]]
-        print(f"{split}: {len(preds_in_split)}")
-        print(f"{split} in lite: {len(preds_in_lite_split)}")
     for pred in preds:
         instance_id = pred["instance_id"]
         traj_path = "/".join(predictions_path.split("/")[:-1]) + f"/{instance_id}.traj"

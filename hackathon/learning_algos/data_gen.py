@@ -53,7 +53,7 @@ def main(dataset_name="princeton-nlp/SWE-bench_Lite", model_name="gpt-4o-mini", 
         for question_index in range(first_question_index, last_question_index)
     ]
     runnable_problems_by_split = get_runnable_problems(
-        f"trajectories/{getuser()}/{model_name}__{dataset_name}__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1"
+        f"trajectories/{getuser()}/{model_name}__{dataset_name}__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1",dataset_name=dataset_name
     )
     print("Model name: ", model_name)
     print("Split: ", split)
@@ -135,4 +135,4 @@ if __name__ == "__main__":
     # Success pvlib__pvlib-python-1072, pydicom__pydicom-1694
     # Progress: marshmallow-code__marshmallow-1359, pylint-dev__astroid-1196, pylint-dev__astroid-1268
 
-    # Full-Dev
+    # Full-Dev gpt-4o-mini 0.10 0-20

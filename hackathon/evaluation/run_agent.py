@@ -87,7 +87,7 @@ if __name__ == "__main__":
     ]
 
     runnable_problems_by_split = get_runnable_problems(
-        f"trajectories/{getuser()}/{model_name}__SWE-bench_Lite__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1"
+        f"trajectories/{getuser()}/{model_name}__SWE-bench_Lite__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1",dataset_name="princeton-nlp/SWE-bench_Lite"
     )
     print("Model name: ", model_name)
     print("Split: ", split)
