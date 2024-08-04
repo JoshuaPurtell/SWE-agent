@@ -39,7 +39,6 @@ def check_mini_for_regressions(splits_to_check=["dev", "test"], model_name="gpt-
 
     for split in splits_to_check:
         import multiprocessing
-
         num_cpus = multiprocessing.cpu_count()
         with multiprocessing.Pool(processes=num_cpus) as pool:
             pool.starmap(
@@ -58,8 +57,8 @@ def check_mini_for_regressions(splits_to_check=["dev", "test"], model_name="gpt-
             run_id="test",
             split=split,
             max_workers=8,
-            dev_ids=mini_successes[split],
-            test_ids=mini_successes[split],
+            dev_ids=mini_successes[model_name]["dev"],
+            test_ids=mini_successes[model_name]["test"],
             full_dataset=d 
         )
         print("Newly failed ids: ", failed_ids, "In split: ", split)
@@ -69,5 +68,5 @@ def check_mini_for_regressions(splits_to_check=["dev", "test"], model_name="gpt-
 
 if __name__ == "__main__":
     t0 = time.time()
-    check_mini_for_regressions(splits_to_check=["test"], model_name="gpt-4o-mini", cost_limit=1.00)
+    check_mini_for_regressions(splits_to_check=["dev"], model_name="gpt-4o-mini", cost_limit=1.00)
     print("Time taken: ", time.time() - t0)
