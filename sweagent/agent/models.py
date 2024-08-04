@@ -783,10 +783,16 @@ class TogetherModel(BaseModel):
             "cost_per_input_token": 9e-07,
             "cost_per_output_token": 9e-07,
         },
+        "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo": {
+            "max_context": 128_000,
+            "cost_per_input_token": 5e-06,
+            "cost_per_output_token": 5e-06,
+        },
     }
 
     SHORTCUTS = {
         "L3.1-70b-Together": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        "L3.1-405b-Together": "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
         "llama13b": "meta-llama/Llama-2-13b-chat-hf",
         "llama70b": "meta-llama/Llama-2-70b-chat-hf",
         "mistral7b": "mistralai/Mistral-7B-Instruct-v0.2",

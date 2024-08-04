@@ -24,12 +24,13 @@ def get_args_dev(
     instance_to_filter_by="marshmallow-code__marshmallow-1359",
     per_instance_cost_limit=0.025,
     split="dev",
+    dataset_name="princeton-nlp/SWE-bench_Lite",
 ) -> ScriptArguments:
     return ScriptArguments(
         suffix="",
         environment=EnvironmentArguments(
             image_name="sweagent/swe-agent:latest",
-            data_path="princeton-nlp/SWE-bench_Lite",
+            data_path=dataset_name,
             split=split,
             verbose=False,
             install_environment=True,
@@ -51,20 +52,18 @@ def get_args_dev(
     )
 
 
-def get_runnable_problems(trajectory_path):
+def get_runnable_problems(trajectory_path,dataset_name="princeton-nlp/SWE-bench_Lite"):
     import os
 
     from datasets import load_dataset
 
-    d = load_dataset("princeton-nlp/SWE-bench_Lite")
+    d = load_dataset(dataset_name)
 
     traj_files = []
     for root, dirs, files in os.walk(trajectory_path):
         for file in files:
             if file.endswith(".traj"):
                 traj_files.append(file.split(".")[0])
-    print("Checking: ", trajectory_path)
-    print("Trajectory files found: ", len(traj_files))
     dev_question_ids = [q["instance_id"] for q in d["dev"]]
     test_question_ids = [q["instance_id"] for q in d["test"]]
 
@@ -114,12 +113,14 @@ def run_swebench_evaluation(
     else:
         predictions_path = predictions_path_override
 
-    ids_by_split = get_runnable_problems("/".join(predictions_path.split("/")[:-1]))
+    ids_by_split = get_runnable_problems("/".join(predictions_path.split("/")[:-1]),full_dataset_name)
     import json
 
     # Load all predictions
+    print("Loading from: ",predictions_path)
     with open(predictions_path) as f:
         all_preds = [json.loads(line) for line in f]
+    print("N all preds: ", len(all_preds))
     # Separate predictions into dev and test
 
     dev_ids = dev_ids if dev_ids is not None else ids_by_split["dev"]
@@ -146,21 +147,46 @@ def run_swebench_evaluation(
     preds = dev_preds if split == "dev" else test_preds
     if len(preds) == 0:
         print(f"No predictions found for split {split}")
-        return [], []
+        return [], [], {}
     else:
         print(f"Running evaluation for split {split} - {len(preds)} predictions found")
 
     milestone_1_percents = {}
+    traceback_counts = {}
+    command_error_counts = {}
+    syntax_error_counts = {}
+    trajectories = {}
+
     dataset = full_dataset[split]
+
+    preds = [
+        pred for pred in preds if pred["instance_id"] in [example["instance_id"] for example in dataset]
+    ]
     for pred in preds:
         instance_id = pred["instance_id"]
+        traj_path = "/".join(predictions_path.split("/")[:-1]) + f"/{instance_id}.traj"
+        print("Traj path: ", traj_path)
+        with open(traj_path) as f:
+            traj = f.read()
+        trajectories[instance_id] = json.loads(traj)
+        traceback_count = traj.count("Traceback")
+        command_error_count = traj.count("Command failed")
+        syntax_error_count = traj.count("SyntaxError")
+        print(f"Instance {instance_id} - Tracebacks: {traceback_count}, Command Errors: {command_error_count}, Syntax Errors: {syntax_error_count}")
+        
+        traceback_counts[instance_id] = traceback_count
+        command_error_counts[instance_id] = command_error_count
+        syntax_error_counts[instance_id] = syntax_error_count
+
         filtered_dataset = dataset.filter(lambda example: example["instance_id"] == instance_id)
         expected = filtered_dataset[0]
         milestone_1_percents[instance_id] = compare_filename_in_patches(pred["model_patch"], expected["patch"])
+    
+
     milestone_1_success = [id for id, percent in milestone_1_percents.items() if percent == 100]
     milestone_1_mean = sum(milestone_1_percents.values()) / len(milestone_1_percents) if milestone_1_percents else 0
     print(f"PATCHED ALL FILES: {len(milestone_1_success)}/{len(preds)}")
-    print(f"MEAN FILES PATCHED: {milestone_1_mean:.2f}%")
+    
     command = [
         "python",
         "-m",
@@ -181,9 +207,11 @@ def run_swebench_evaluation(
     t0 = time.time()
     result = subprocess.run(command, capture_output=True, text=True)
     print("Time taken to run swebench: ", time.time() - t0)
-    print("STDERR:", result.stderr)
+    #print("STDERR:", result.stderr)
     # Parse and print the summary
     lines = result.stdout.split("\n")
+    success_ids = []
+    failed_ids = []
     for line in lines:
         if "Report written to " in line:
             file_name = line.replace("Report written to ", "")
@@ -202,16 +230,50 @@ def run_swebench_evaluation(
                 milestone_1_emoji = "✅" if perc == 100 else "❌"
                 milestone_1 = f" (PATCHED FILES: {perc}% {milestone_1_emoji})"
                 print(f"{color}• {id}{milestone_1}{Style.RESET_ALL}")
+    if len(success_ids) + len(failed_ids) == 0:
+        print("No results found")
+        return [], [], {}
+    print(f"MEAN FILES PATCHED: {milestone_1_mean:.2f}%")
+    print(f"SUCCESS RATE: {100 * len(success_ids) / (len(success_ids) + len(failed_ids)):.2f}%")
 
+    instance_infos = {}
+    metrics = [
+        ("milestone_1_percent", milestone_1_percents),
+        ("traceback_count", traceback_counts),
+        ("command_error_count", command_error_counts),
+        ("syntax_error_count", syntax_error_counts),
+        ("trajectory", trajectories),
+    ]
+
+    for id in success_ids:
+        instance_infos[id] = {
+            "status": "success",
+            **{name: metric.get(id, 0) for name, metric in metrics},
+        }
+
+    for id in failed_ids:
+        instance_infos[id] = {
+            "status": "failed",
+            **{name: metric.get(id, 0) for name, metric in metrics},
+        }
+    return success_ids, failed_ids, instance_infos
 
 def run_agent_and_catch_logs(
-    model_name=None, instance="marshmallow-code__marshmallow-1359", cost_limit=0.05, split="dev"
+    model_name=None, instance="marshmallow-code__marshmallow-1359", cost_limit=0.05, split="dev", verbose=False, dataset_name="princeton-nlp/SWE-bench_Lite"
 ):
+    if verbose:
+        main(
+            get_args_dev(
+                model_name=model_name, instance_to_filter_by=instance, per_instance_cost_limit=cost_limit, split=split, dataset_name=dataset_name
+            )
+        )
+        return []
+    
     output = io.StringIO()
     with redirect_stdout(output):
         main(
             get_args_dev(
-                model_name=model_name, instance_to_filter_by=instance, per_instance_cost_limit=cost_limit, split=split
+                model_name=model_name, instance_to_filter_by=instance, per_instance_cost_limit=cost_limit, split=split, dataset_name=dataset_name
             )
         )
 
@@ -221,14 +283,14 @@ def run_agent_and_catch_logs(
     return log_lines
 
 
-def run_agents_and_catch_logs(model_name, instance_ids: List, instance_cost_limit: float, split: str):
+def run_agents_and_catch_logs(model_name, instance_ids: List, instance_cost_limit: float, split: str, verbose=False, dataset_name="princeton-nlp/SWE-bench_Lite"):
     import multiprocessing
 
     num_cpus = multiprocessing.cpu_count()
     with multiprocessing.Pool(processes=num_cpus) as pool:
         results = pool.starmap(
             run_agent_and_catch_logs,
-            [(model_name, instance_id, instance_cost_limit, split) for instance_id in instance_ids],
+            [(model_name, instance_id, instance_cost_limit, split, verbose, dataset_name) for instance_id in instance_ids],
         )
 
     log_lines = [line for result in results for line in result]

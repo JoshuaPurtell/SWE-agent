@@ -47,7 +47,7 @@ def check_mini_for_regressions(splits_to_check=["dev", "test"], model_name="gpt-
             )
     t1 = time.time()
     for split in splits_to_check:
-        success_ids, failed_ids = run_swebench_evaluation(
+        success_ids, failed_ids, information_by_instance = run_swebench_evaluation(
             predictions_path_override=None,
             model_name=model_name,
             full_dataset_name="princeton-nlp/SWE-bench_Lite",

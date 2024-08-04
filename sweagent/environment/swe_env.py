@@ -45,7 +45,7 @@ from sweagent.environment.utils import (
 from sweagent.utils.config import keys_config
 from sweagent.utils.log import default_logger, get_logger
 
-LONG_TIMEOUT = float(keys_config.get("SWE_AGENT_ENV_LONG_TIMEOUT", 500))
+LONG_TIMEOUT = float(keys_config.get("SWE_AGENT_ENV_LONG_TIMEOUT", 250))#500
 AGENT_ACTION_TIMEOUT = float(keys_config.get("SWE_AGENT_ACTION_TIMEOUT", 25))
 PATH_TO_REQS = "/root/requirements.txt"
 PATH_TO_ENV_YML = "/root/environment.yml"
@@ -927,7 +927,6 @@ class SWEEnv(gym.Env):
             self.logger.info(f"{env_name} conda env not found, creating...")
             packages = install_configs.get("packages", "")
             if packages == "requirements.txt":
-                # Create conda environment
                 self.communicate_with_handling(
                     f"conda create -n {env_name} python={install_configs['python']} -y",
                     error_msg="Failed to create conda environment",
