@@ -856,10 +856,12 @@ class OpenPipe(BaseModel):
         "meta-llama/Meta-Llama-3.1-8B-Instruct": {
             "api_key_name": "OPENPIPE_API_KEY",
             "model_id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+            "max_context": 128_000,
         },
         "meta-llama/Meta-Llama-3.1-70B-Instruct": { # FINE-TUNED
             "api_key_name": "OPENPIPE_API_KEY",
             "model_id": "openpipe:petite-bars-dress", 
+            "max_context": 128_000,
         },
        "gpt-4o-2024-05-13": {
             "max_context": 128_000,
@@ -893,7 +895,6 @@ class OpenPipe(BaseModel):
             model=model_id,
             messages=prompt,
             
-            #TODO: not sure what we should set this to
             temperature=self.args.temperature,
             top_p=self.args.top_p,
             stop=['<human>'],
