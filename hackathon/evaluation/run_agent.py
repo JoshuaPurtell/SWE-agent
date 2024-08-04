@@ -64,7 +64,7 @@ if __name__ == "__main__":
     #     model_name = "L3.1-70b-Groq"
     #     cost_limit = 1.0
     
-    model_name = "open-pipe-llama8b"
+    model_name = "open-pipe-llama70b"
     cost_limit = 1.0
 
     run_agent = True
