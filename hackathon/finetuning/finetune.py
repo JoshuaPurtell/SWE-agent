@@ -4,7 +4,7 @@ import os
 # Currently, this file just contains a function that will create training dataset to finetune on.
 # Generated file from `create_training_data` can be uploaded to OpenPipe console to finetune the model.
 class Finetune():
-    def __init__(self, instance_id):
+    def __init__(self, instance_id, run_name):
         # Sample of how to instantiate openpipe client
         # Make sure you have the OPENAI_API_KEY and OPENPIPE_API_KEY set in your environment
         '''
@@ -16,6 +16,7 @@ class Finetune():
         )
         '''
         self.instance_id = instance_id
+        self.run_name = run_name
         self.input = None
         self.output = None
 
@@ -25,7 +26,7 @@ class Finetune():
     def setOutput(self, output):
         self.output = output
 
-    def transform_single_to_openai_chat_format(self, model = "gpt-4o-mini"):
+    def transform_single_to_openai_chat_format(self):
         return {
             # only required field
             "messages" : [
@@ -52,9 +53,13 @@ class Finetune():
         }
 
     # Upload this output to OpenPipe on console
-    def append_single_entry(self, model = "gpt-4o-mini"):
+    def append_single_entry(self):
         if self.input is None or self.output is None:
             raise ValueError("Input and Output cannot be None")
-        f = open("hackathon/finetuning/{example}_training_data.jsonl".format(example = model + "_" + self.instance_id), "a")
+        f = open(
+                "hackathon/finetuning/{example}_training_data.jsonl"
+                    .format(example = self.run_name + "_" + self.instance_id), 
+                "a"
+            )
         f.write(str(self.transform_single_to_openai_chat_format()) + "\n")
         f.close()
