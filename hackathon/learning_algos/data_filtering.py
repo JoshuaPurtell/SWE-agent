@@ -6,7 +6,8 @@ from dataclasses import dataclass
 # create, edit 
 # split based on space and take first one in action
 # Remove based on 'observation'
-taboo = ["Traceback","CommandError","Your proposed edit has introduced"]
+taboo = ["Traceback","CommandError","Your proposed edit has introduced", "No matches found for", "No such file or directory", "EXECUTION TIMED OUT"]
+taboo_starts_with = ["Error:"]
 
 @dataclass
 class Datum:
@@ -20,6 +21,8 @@ def filter_messages(messages, trajectory):
     for message, trajectory_step in zip(messages, trajectory):
         observation = trajectory_step['observation']
         if any([t in observation for t in taboo]):
+            continue
+        if any([observation.startswith(t) for t in taboo_starts_with]):
             continue
         action = trajectory_step['action'].split(" ")[0].strip("\n")
         filtered_messages.append(Datum(messages=message, action=action))
