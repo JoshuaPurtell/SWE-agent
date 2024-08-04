@@ -6,6 +6,7 @@ import os
 from collections import defaultdict
 from dataclasses import dataclass, fields
 from pathlib import Path
+import requests
 
 import groq
 import together
@@ -880,10 +881,6 @@ class BaseTen(BaseModel):
         return f"{prompt}\n<bot>:"
 
     def baseten_wrapper(self, prompt: str, model_id: str, api_key_name: str, max_tokens: int = 500) -> str:
-        import os
-
-        import requests
-
         API_KEY = os.getenv(api_key_name)
         if not API_KEY:
             raise ValueError(f"API key for {api_key_name} not found in environment variables.")
@@ -906,7 +903,7 @@ class BaseTen(BaseModel):
             prompt=prompt,
             model_id=self.model_metadata["model_id"],
             api_key_name=self.model_metadata["api_key_name"],
-            max_tokens=min([500, max_tokens_to_sample]),
+            max_tokens=max_tokens_to_sample,
         )
         print()
         # Calculate + update costs, return response
