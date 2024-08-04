@@ -70,7 +70,7 @@ if __name__ == "__main__":
     run_agent = True
     evaluate_agent = False
     
-    split = "dev"
+    split = "test"
     question_ids = ["django__django-14855"]#["astropy__astropy-14995","django__django-14382"]
     question_ids = [
         "astropy__astropy-14995",
