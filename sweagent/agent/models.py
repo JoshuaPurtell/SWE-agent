@@ -1168,6 +1168,8 @@ def get_model(args: ModelArguments, commands: list[Command] | None = None):
         return GroqModel(args, commands)
     elif args.model_name in BaseTen.SHORTCUTS:
         return BaseTen(args, commands)
+    elif args.model_name in OpenPipe.SHORTCUTS:
+        return OpenPipe(args, commands)
     elif args.model_name == "instant_empty_submit":
         return InstantEmptySubmitTestModel(args, commands)
     else:

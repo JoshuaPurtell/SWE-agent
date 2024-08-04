@@ -44,25 +44,29 @@ if __name__ == "__main__":
     from datasets import load_dataset
 
     d = load_dataset("princeton-nlp/SWE-bench_Lite")#_Lite
-    mode = ["mini", "sonnet", "L3.1-70b-Together", "L3.1-70b-Baseten", "L3.1-405b-Baseten", "L3.1-70b-Groq"][2]
-    if mode == "mini":
-        model_name = "gpt-4o-mini"
-        cost_limit = 0.21
-    elif mode == "sonnet":
-        model_name = "claude-3-5-sonnet-20240620"
-        cost_limit = 1.5
-    elif mode == "L3.1-70b-Together":
-        model_name = "L3.1-70b-Together"
-        cost_limit = 0.25
-    elif mode == "L3.1-70b-Baseten":
-        model_name = "L3.1-70b-BaseTen"
-        cost_limit = 1.0
-    elif mode == "L3.1-405b-Baseten":
-        model_name = "L3.1-405b-BaseTen"
-        cost_limit = 1.0
-    elif mode == "L3.1-70b-Groq":
-        model_name = "L3.1-70b-Groq"
-        cost_limit = 1.0
+    # mode = ["mini", "sonnet", "L3.1-70b-Together", "L3.1-70b-Baseten", "L3.1-405b-Baseten", "L3.1-70b-Groq", "open-pipe-llama8b"][2]
+    # if mode == "mini":
+    #     model_name = "gpt-4o-mini"
+    #     cost_limit = 0.21
+    # elif mode == "sonnet":
+    #     model_name = "claude-3-5-sonnet-20240620"
+    #     cost_limit = 1.5
+    # elif mode == "L3.1-70b-Together":
+    #     model_name = "L3.1-70b-Together"
+    #     cost_limit = 0.25
+    # elif mode == "L3.1-70b-Baseten":
+    #     model_name = "L3.1-70b-BaseTen"
+    #     cost_limit = 1.0
+    # elif mode == "L3.1-405b-Baseten":
+    #     model_name = "L3.1-405b-BaseTen"
+    #     cost_limit = 1.0
+    # elif mode == "L3.1-70b-Groq":
+    #     model_name = "L3.1-70b-Groq"
+    #     cost_limit = 1.0
+    
+    model_name = "open-pipe-llama8b"
+    cost_limit = 1.0
+
     run_agent = True
     evaluate_agent = True
     
