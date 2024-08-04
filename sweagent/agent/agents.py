@@ -473,7 +473,7 @@ class Agent:
         self.subroutine_patterns[self.config.submit_command] = submit_pat
         self.command_patterns[self.config.submit_command] = submit_pat
 
-    def forward(self, observation: str, available_actions: list[str], state: str) -> tuple[str, str, str]:
+    def forward(self, observation: str, available_actions: list[str], state: str, finetune_store : Finetune) -> tuple[str, str, str]:
         """Forwards the model
 
         Args:
@@ -486,8 +486,7 @@ class Agent:
             action: action that the model proposes
             output: raw model output (not output of the action)
         """
-        finetune_example_store = Finetune()
-        thought, action, output = self.forward_with_error_check(observation, state, finetune_example_store)
+        thought, action, output = self.forward_with_error_check(observation, state, finetune_store)
 
         self._append_history(
             {
@@ -500,8 +499,8 @@ class Agent:
         )
 
         # output = thought + action
-        finetune_example_store.setOutput(output)
-        finetune_example_store.append_single_entry()
+        finetune_store.setOutput(output)
+        finetune_store.append_single_entry()
 
         self.logger.info(f"💭 THOUGHT ({self.name})\n{thought}")
         self.logger.info(f"🎬 ACTION ({self.name})\n{action}")
@@ -780,6 +779,7 @@ class Agent:
         traj_dir: Path | None = None,
         return_type: str | None = "info_trajectory",
         init_model_stats: APIStats | None = None,
+        finetune_store: Finetune = None,
     ):
         """
         Run the agent on an environment.
@@ -824,7 +824,7 @@ class Agent:
             for hook in self.hooks:
                 hook.on_step_start()
             state = env.communicate(self.state_command) if self.state_command else None
-            thought, action, output = self.forward(observation, env.get_available_actions(), state)
+            thought, action, output = self.forward(observation, env.get_available_actions(), state, finetune_store)
             for hook in self.hooks:
                 hook.on_actions_generated(thought=thought, action=action, output=output)
             observations = list()
