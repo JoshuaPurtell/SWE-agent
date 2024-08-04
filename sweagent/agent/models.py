@@ -902,6 +902,19 @@ class OpenPipe(BaseModel):
 
         return response.choices[0].message
 
+    def history_to_messages(self, history: list[dict[str, str]], is_demonstration: bool = False) -> str:
+        """
+        Create `prompt` by filtering out all keys except for role/content per `history` turn
+        """
+        # Remove system messages if it is a demonstration
+        if is_demonstration:
+            history = [entry for entry in history if entry["role"] != "system"]
+        # Map history to TogetherAI format
+        mapping = {"user": "human", "assistant": "bot", "system": "bot"}
+        prompt = [f'<{mapping[d["role"]]}>: {d["content"]}' for d in history]
+        prompt = "\n".join(prompt)
+        return f"{prompt}\n<bot>:"
+
     def query(self, history: list[dict[str, str]]) -> str:
         """
         Query OpenPipe with the given `history` and return the response.
