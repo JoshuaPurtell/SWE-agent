@@ -9,10 +9,10 @@ if __name__ == "__main__":
 
     d = load_dataset("princeton-nlp/SWE-bench_Lite")
 
-    mode = ["mini", "sonnet", "L3.1-70b-Together", "L3.1-405b-Baseten", "L3.1-70b-Groq"][2]
+    mode = ["mini", "sonnet", "L3.1-70b-Together", "L3.1-405b-Baseten", "L3.1-70b-Groq"][0]
     if mode == "mini":
         model_name = "gpt-4o-mini"
-        cost_limit = 0.20
+        cost_limit = 0.22
     elif mode == "sonnet":
         model_name = "claude-3-5-sonnet-20240620"
         cost_limit = 1.5
