@@ -855,8 +855,10 @@ class OpenPipe(BaseModel):
     MODELS = {
         "meta-llama/Meta-Llama-3.1-8B-Instruct": {
             "api_key_name": "OPENPIPE_API_KEY",
-            "model_id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
-            "max_context": 128_000,
+            "model_id": "openpipe:little-buttons-sleep",
+            "max_context": 8192,
+            "cost_per_input_token": 9e-07,
+            "cost_per_output_token": 9e-07,
         },
         "meta-llama/Meta-Llama-3.1-70B-Instruct": { # FINE-TUNED
             "api_key_name": "OPENPIPE_API_KEY",
@@ -890,7 +892,7 @@ class OpenPipe(BaseModel):
             }     
         )
 
-    def openpipe_wrapper(self, prompt: str, model_id: str, max_tokens: int) -> str:
+    def openpipe_wrapper(self, prompt: str, model_id: str) -> str:
         response = self.llmClient.chat.completions.create(
             model=model_id,
             messages=prompt,
@@ -898,10 +900,9 @@ class OpenPipe(BaseModel):
             temperature=self.args.temperature,
             top_p=self.args.top_p,
             stop=['<human>'],
-            max_tokens=max_tokens
         )
 
-        return response.choices[0].message
+        return response.choices[0].message.content
 
     def history_to_messages(self, history: list[dict[str, str]], is_demonstration: bool = False) -> str:
         """
@@ -926,7 +927,6 @@ class OpenPipe(BaseModel):
         response = self.openpipe_wrapper(
             prompt=history,
             model_id=self.model_metadata["model_id"],
-            max_tokens = max_tokens_to_sample,
         )
 
         # Calculate + update costs, return response
