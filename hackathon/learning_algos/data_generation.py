@@ -53,18 +53,18 @@ def main(dataset_name="princeton-nlp/SWE-bench_Lite", model_name="gpt-4o-mini", 
         for question_index in range(first_question_index, last_question_index)
     ]
     runnable_problems_by_split = get_runnable_problems(
-        f"trajectories/{getuser()}/{model_name}__{dataset_name}__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1"
+        f"trajectories/{getuser()}/{model_name}__{dataset_name}__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1",dataset_name=dataset_name
     )
     print("Model name: ", model_name)
     print("Split: ", split)
     print({k: len(v) for k, v in runnable_problems_by_split.items()})
     t0_agent = time.time()
     if run_agent:
-        chunk_size = 10
+        chunk_size = 6
         for i in range(0, len(question_ids), chunk_size):
             batch_ids = question_ids[i:i+chunk_size]
             run_agents_and_catch_logs(
-                model_name=model_name, instance_ids=batch_ids, instance_cost_limit=cost_limit, split=split, dataset_name=dataset_name
+                model_name=model_name, instance_ids=batch_ids, instance_cost_limit=cost_limit, split=split, verbose=False, dataset_name=dataset_name
             )
     print("Time taken to run agent: ", time.time() - t0_agent)
     if evaluate_agent:
@@ -85,16 +85,21 @@ def main(dataset_name="princeton-nlp/SWE-bench_Lite", model_name="gpt-4o-mini", 
                 split=split,
                 max_workers=8,
                 full_dataset=d,
-                test_ids=question_ids,
+                test_ids=question_ids[0:5],
             )
 
             finetuning_dir = "hackathon/finetuning"
             jsonl_files = glob.glob(os.path.join(finetuning_dir, "*.jsonl"))
-            print(information_by_instance.keys())
+            print("Info by instance: ",information_by_instance.keys())
+            #ids_in_jsonl_files = [jsonl_file.split("_training_data")[0].split("_install-1_")[1] for jsonl_file in jsonl_files]
+            #print("Ids in jsonl files: ", ids_in_jsonl_files)
             for id in successful_ids:
                 for jsonl_file in jsonl_files:
                     if id in jsonl_file:
                         data = fix_jsonl(jsonl_file)
+                        if id not in information_by_instance:
+                            continue
+                        print("Saving data for id: ", id,information_by_instance[id].keys())
                         full_datum = {
                             "instance_id": id,
                             "ft_messages": data,
@@ -107,6 +112,10 @@ def main(dataset_name="princeton-nlp/SWE-bench_Lite", model_name="gpt-4o-mini", 
                 if os.path.exists(jsonl_file):
                     data = fix_jsonl(jsonl_file)
                     id = jsonl_file.split("_training_data")[0].split("_install-1_")[1]
+                    #print("Saving for id: ", id, id in information_by_instance.keys())
+                    if id not in information_by_instance.keys():
+                        continue
+                    print("Saving for id: ", id, information_by_instance[id].keys())
                     full_datum = {
                         "instance_id": id,
                         "ft_messages": data,
@@ -126,8 +135,8 @@ if __name__ == "__main__":
         model_name="gpt4o",
         cost_limit=0.75,
         split="dev",
-        first_question_index=0,
-        last_question_index=100,
+        first_question_index=170,
+        last_question_index=220,
     )
     #ERROR: No matching distribution found for vtk, hd5py, pyvista
     
@@ -144,3 +153,10 @@ if __name__ == "__main__":
 
     # Full Dev GPT-4o (75 cents) 0-100
     # Success: marshmallow-code__marshmallow-1343, vlib__pvlib-python-1026, pvlib__pvlib-python-1072, pvlib__pvlib-python-1093, pvlib__pvlib-python-1160, pvlib__pvlib-python-1191, pvlib__pvlib-python-1216, pvlib__pvlib-python-1273
+
+    # Full Dev GPT-4o (75 cents) 170-220
+    # 
+
+    # Assemble huge dataset
+    # Filter on quality
+    # Finetune gpt-4o-mini for sanity check, put all the chips on black for L3-70b
