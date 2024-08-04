@@ -20,6 +20,8 @@ from tenacity import (
     wait_random_exponential,
 )
 
+from openpipe import OpenAI as OpenPipeOpenAI
+
 from sweagent.agent.commands import Command
 from sweagent.utils.config import keys_config
 from sweagent.utils.log import get_logger
@@ -880,7 +882,7 @@ class OpenPipe(BaseModel):
 
     def __init__(self, args: ModelArguments, commands: list[Command]):
         super().__init__(args, commands)
-        self.llmClient = OpenAI(
+        self.llmClient = OpenPipeOpenAI(
             openpipe = {
                 "api_key": os.getenv("OPENPIPE_API_KEY"),
             }     
