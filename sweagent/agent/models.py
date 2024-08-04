@@ -894,7 +894,13 @@ class BaseTen(BaseModel):
         response = requests.post(
             f"https://model-{model_id}.api.baseten.co/production/predict",
             headers={"Authorization": f"Api-Key {API_KEY}"},
-            json={"prompt": prompt, "stream": False, "max_tokens": max_tokens},
+            json={"prompt": prompt,
+                  "stream": False,
+                  "max_tokens": max_tokens,
+                  "stop":["<human>"],
+                  "temperature": self.args.temperature,
+                  "top_p": self.args.top_p
+                },
         )
         return response.json()["text"]
 
