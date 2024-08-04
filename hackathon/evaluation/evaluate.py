@@ -158,6 +158,10 @@ def run_swebench_evaluation(
     trajectories = {}
 
     dataset = full_dataset[split]
+
+    preds = [
+        pred for pred in preds if pred["instance_id"] in [example["instance_id"] for example in dataset]
+    ]
     for pred in preds:
         instance_id = pred["instance_id"]
         traj_path = "/".join(predictions_path.split("/")[:-1]) + f"/{instance_id}.traj"
