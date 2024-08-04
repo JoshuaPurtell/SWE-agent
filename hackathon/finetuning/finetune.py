@@ -56,6 +56,5 @@ class Finetune():
         if self.input is None or self.output is None:
             raise ValueError("Input and Output cannot be None")
         f = open("hackathon/finetuning/{example}_training_data.jsonl".format(example = model + "_" + self.instance_id), "a")
-        f = open("hackathon/finetuning/training_data.jsonl", "a")
         f.write(str(self.transform_single_to_openai_chat_format()) + "\n")
         f.close()
