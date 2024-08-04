@@ -160,7 +160,7 @@ def run_swebench_evaluation(
     milestone_1_success = [id for id, percent in milestone_1_percents.items() if percent == 100]
     milestone_1_mean = sum(milestone_1_percents.values()) / len(milestone_1_percents) if milestone_1_percents else 0
     print(f"PATCHED ALL FILES: {len(milestone_1_success)}/{len(preds)}")
-    print(f"MEAN FILES PATCHED: {milestone_1_mean:.2f}%")
+    
     command = [
         "python",
         "-m",
@@ -181,7 +181,7 @@ def run_swebench_evaluation(
     t0 = time.time()
     result = subprocess.run(command, capture_output=True, text=True)
     print("Time taken to run swebench: ", time.time() - t0)
-    print("STDERR:", result.stderr)
+    #print("STDERR:", result.stderr)
     # Parse and print the summary
     lines = result.stdout.split("\n")
     for line in lines:
@@ -202,7 +202,8 @@ def run_swebench_evaluation(
                 milestone_1_emoji = "✅" if perc == 100 else "❌"
                 milestone_1 = f" (PATCHED FILES: {perc}% {milestone_1_emoji})"
                 print(f"{color}• {id}{milestone_1}{Style.RESET_ALL}")
-
+    print(f"MEAN FILES PATCHED: {milestone_1_mean:.2f}%")
+    print(f"SUCCESS RATE: {100 * len(success_ids) / (len(success_ids) + len(failed_ids)):.2f}%")
 
 def run_agent_and_catch_logs(
     model_name=None, instance="marshmallow-code__marshmallow-1359", cost_limit=0.05, split="dev"

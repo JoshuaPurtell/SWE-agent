@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     d = load_dataset("princeton-nlp/SWE-bench_Lite")
 
-    mode = ["mini", "sonnet", "L3.1-70b-Together", "L3.1-405b-Baseten", "L3.1-70b-Groq"][0]
+    mode = ["mini", "sonnet", "L3.1-70b-Together", "L3.1-405b-Baseten", "L3.1-70b-Groq"][2]
     if mode == "mini":
         model_name = "gpt-4o-mini"
         cost_limit = 0.20
@@ -27,9 +27,25 @@ if __name__ == "__main__":
         cost_limit = 1.0
     run_agent = True
     evaluate_agent = True
-    split = "dev"
-    first_question_index = 5
-    last_question_index = 20
+    
+    split = "test"
+    question_ids = [
+        "astropy__astropy-14995",
+        "django__django-11039",
+        "django__django-11099",
+        "django__django-11133",
+        "django__django-12453",
+        "django__django-12983",
+        "django__django-13658",
+        "django__django-14382",
+        "django__django-14855",
+    ]
+    # first_question_index = 5
+    # last_question_index = 20
+    # question_ids = [
+    #     d[split][question_index]["instance_id"]
+    #     for question_index in range(first_question_index, last_question_index)
+    # ]
 
     runnable_problems_by_split = get_runnable_problems(
         f"trajectories/jp/{model_name}__SWE-bench_Lite__default__t-0.00__p-0.95__c-{cost_limit:.2f}__install-1"
@@ -39,10 +55,7 @@ if __name__ == "__main__":
     print({k: len(v) for k, v in runnable_problems_by_split.items()})
     t0_agent = time.time()
     if run_agent:
-        question_ids = [
-            d[split][question_index]["instance_id"]
-            for question_index in range(first_question_index, last_question_index)
-        ]
+        
         run_agents_and_catch_logs(
             model_name=model_name, instance_ids=question_ids, instance_cost_limit=cost_limit, split=split
         )
@@ -65,5 +78,6 @@ if __name__ == "__main__":
                 split=split,
                 max_workers=2,
                 full_dataset=d,
+                test_ids=question_ids,
             )
         print("Time taken to evaluate runs: ", time.time() - t0)
