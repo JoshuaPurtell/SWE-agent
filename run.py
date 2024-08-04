@@ -307,6 +307,7 @@ class OpenPRHook(MainHook):
 
 class Main:
     def __init__(self, args: ScriptArguments):
+        self.run_name = args.run_name
         self.traj_dir = Path("trajectories") / Path(getuser()) / args.run_name
         self.traj_dir.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.datetime.now().strftime("%y%m%d%H%M%S")
@@ -369,7 +370,7 @@ class Main:
             observation=observation,
             traj_dir=self.traj_dir,
             return_type="info_trajectory",
-            finetune_store=Finetune(instance_id),
+            finetune_store=Finetune(instance_id, self.run_name),
         )
         self._save_predictions(instance_id, info)
         for hook in self.hooks:
