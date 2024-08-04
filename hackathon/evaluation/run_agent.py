@@ -68,9 +68,9 @@ if __name__ == "__main__":
     cost_limit = 1.0
 
     run_agent = True
-    evaluate_agent = True
+    evaluate_agent = False
     
-    split = "test"
+    split = "dev"
     question_ids = ["django__django-14855"]#["astropy__astropy-14995","django__django-14382"]
     question_ids = [
         "astropy__astropy-14995",
@@ -83,8 +83,8 @@ if __name__ == "__main__":
         "django__django-14382",
         "django__django-14855",
     ]
-    first_question_index = 80
-    last_question_index = 85
+    first_question_index = 0
+    last_question_index = 23
     question_ids = [
         d[split][question_index]["instance_id"]
         for question_index in range(first_question_index, last_question_index)

@@ -880,21 +880,24 @@ class OpenPipe(BaseModel):
 
     def __init__(self, args: ModelArguments, commands: list[Command]):
         super().__init__(args, commands)
-        llmClient = OpenAI(
+        self.llmClient = OpenAI(
             openpipe = {
                 "api_key": os.getenv("OPENPIPE_API_KEY"),
             }     
         )
 
-    def openpipe_wrapper(self, prompt: str, model_id: str) -> str:
+    def openpipe_wrapper(self, prompt: str, model_id: str, max_tokens: int) -> str:
         response = self.llmClient.chat.completions.create(
             model=model_id,
             messages=prompt,
             
             #TODO: not sure what we should set this to
             temperature=self.args.temperature,
+            top_p=self.args.top_p,
+            stop=['<human>'],
+            max_tokens=max_tokens
         )
-        
+
         return response.choices[0].message
 
     def query(self, history: list[dict[str, str]]) -> str:
@@ -902,10 +905,12 @@ class OpenPipe(BaseModel):
         Query OpenPipe with the given `history` and return the response.
         """
         # Anthropic's count_tokens is convenient because it caches and utilizes huggingface/tokenizers, so we will use.
+        prompt = self.history_to_messages(history)
         max_tokens_to_sample = self.model_metadata["max_context"] - Anthropic().count_tokens(prompt)
         response = self.openpipe_wrapper(
             prompt=history,
             model_id=self.model_metadata["model_id"],
+            max_tokens = max_tokens_to_sample,
         )
 
         # Calculate + update costs, return response
